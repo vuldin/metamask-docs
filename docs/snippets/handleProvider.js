@@ -24,11 +24,9 @@ function startApp(provider) {
 /* Handle chain (network) and chainChanged (per EIP 1193) */
 /**********************************************************/
 
-let currentChainId = null;
-ethereum
-  .request({ method: 'eth_chainId' })
-  .then(handleChainChanged)
-  .catch((err) => console.error(err));
+// Normally, we would recommend the 'eth_chainId' RPC method, but it currently
+// returns incorrectly formatted chain ID values.
+let currentChainId = ethereum.chainId;
 
 ethereum.on('chainChanged', handleChainChanged);
 

@@ -45,7 +45,7 @@ Other than that, you can generally learn everything you need to know from the do
 
 However, for developers of convenience libraries, and for developers who would like to use features that are not yet supported by their favorite libraries, knowledge of the provider API is essential. Read on for more details.
 
-## Upcoming Breaking Provider Changes
+## Upcoming Breaking Changes
 
 ::: tip
 These changes are _upcoming._ Follow [this GitHub issue](https://github.com/MetaMask/metamask-extension/issues/8077) for details.
@@ -84,6 +84,29 @@ In **Q4 2020** (date TBD), we will:
 If you rely on the `window.web3` object currently injected by MetaMask, these changes _will_ break your website.
 Please read our [migration guide](about:blank) for more details.
 
+## Chain IDs
+
+::: warning
+At the moment, the [`ethereum.chainId`](#ethereum-chainid) property and the [`chainChanged`](#chainchanged) event should be preferred over the `eth_chainId` RPC method.
+Their chain ID values are correctly formatted, per the table below.
+
+`eth_chainId` returns an incorrectly formatted (0-prefixed) chain ID for the chains in the table below, e.g. `0x01` instead of `0x1`.
+See [Upcoming Breaking Changes](#upcoming-breaking-changes) for details on when the `eth_chainId` RPC method will be fixed.
+
+Custom RPC chains are not affected; they return the chain ID specified by the user.
+:::
+
+These are the IDs of the Ethereum chains that MetaMask supports by default.
+Consult [chainid.network](https://chainid.network) for more.
+
+| Hex  | Decimal | Network                         |
+| ---- | ------- | ------------------------------- |
+| 0x1  | 1       | Ethereum Main Network (MainNet) |
+| 0x3  | 3       | Ropsten Test Network            |
+| 0x4  | 4       | Rinkeby Test Network            |
+| 0x5  | 5       | Goerli Test Network             |
+| 0x2a | 42      | Kovan Test Network              |
+
 ## Properties
 
 ### ethereum.isMetaMask
@@ -93,6 +116,16 @@ This property is just a convention, and other providers may identify themselves 
 :::
 
 `true` if the user has MetaMask installed, some falsy value otherwise.
+
+### ethereum.chainId
+
+::: warning
+The value of this property can change at any time, and should not be exclusively relied upon. See the [`chainChanged`](#chainchanged) event for details.
+
+**NOTE:** See the [Chain IDs section](#chain-ids) for important information about the MetaMask provider's chain IDs.
+:::
+
+A hexadecimal string representing the current chain ID.
 
 ### ethereum.reloadOnChainChange
 
@@ -233,10 +266,11 @@ We call this the user's _Primary_ account, and you should only interact with tha
 ::: warning
 Remember that, by default, the provider will reload the page immediately after this event is emitted.
 This is because chain changes are difficult to handle correctly.
-
 See [`ethereum.reloadOnChainChange`](#ethereum-reloadonchainchange) for more details.
 
 If the provider is configured to not reload the page on chain changes, you will have to use this event to handle chain changes appropriately.
+
+**NOTE:** See the [Chain IDs section](#chain-ids) for important information about the MetaMask provider's chain IDs.
 :::
 
 ```typescript
@@ -244,22 +278,8 @@ ethereum.on('chainChanged', listener: (chainId: string) => void);
 ```
 
 The MetaMask provider emits this event when the currently connected chain changes.
-The emitted `chainId` value always matches the return value of the `eth_chainId` RPC method.
 
 All RPC requests are be submitted to the currently connected chain, it's important to keep track of when the chain ID changes.
-
-#### Chain IDs
-
-Below you will find the chain IDs of the networks MetaMask supports by default.
-Consult [chainid.network](https://chainid.network) for more.
-
-| Hex  | Decimal | Network                         |
-| ---- | ------- | ------------------------------- |
-| 0x1  | 1       | Ethereum Main Network (MainNet) |
-| 0x3  | 3       | Ropsten Test Network            |
-| 0x4  | 4       | Rinkeby Test Network            |
-| 0x5  | 5       | Goerli Test Network             |
-| 0x2a | 42      | Kovan Test Network              |
 
 ### message
 
@@ -337,15 +357,21 @@ ethereum.autoRefreshOnNetworkChange = false;
 ### ethereum.networkVersion (DEPRECATED)
 
 ::: warning
-Use [`ethereum.request({ method: 'eth_chainId' })`](#ethereum-request-args) instead.
+You should always prefer the chain ID over the network ID.
+
+If you must get the network ID, use [`ethereum.request({ method: 'net_version' })`](#ethereum-request-args).
+
+The value of this property can change at any time.
 :::
 
-Returns a numeric string representing the current blockchain's network ID. A few example values:
+A decimal string representing the current blockchain's network ID.
 
 ### ethereum.selectedAddress (DEPRECATED)
 
 ::: warning
 Use [`ethereum.request({ method: 'eth_accounts' })`](#ethereum-request-args) instead.
+
+The value of this property can change at any time.
 :::
 
 Returns a hexadecimal string representing the user's "currently selected" address.
